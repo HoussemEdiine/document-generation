@@ -9,7 +9,12 @@ import org.apache.poi.hwpf.usermodel.Section;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.poi.wp.usermodel.HeaderFooterType;
+import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
+import org.apache.poi.xwpf.usermodel.UnderlinePatterns;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFFooter;
+import org.apache.poi.xwpf.usermodel.XWPFHeader;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
@@ -42,11 +47,11 @@ public class RestControllerDoc {
         return  "document generated" ;
     }
 
-    public  void  generateDoc(){
+    public  void  generateDoc(Object request){
 
         Map<String,String> map = Map.of("nameValue","Houssem edd",
                 "ageValue","22",
-                "genreValue","male");
+                "genreValue","male","SPECIFY THE NAME","Houssem Eddine Maissoudi");
         // path were the original template is located
         String filePath = "D:\\genDoc\\template.docx";
         //path of the out put result
@@ -54,7 +59,7 @@ public class RestControllerDoc {
         try( OPCPackage fs = OPCPackage.open(new File(filePath));) {
 
             XWPFDocument doc = new XWPFDocument(new FileInputStream( filePath ));
-            doc = replaceText(doc, map);
+            doc = replaceText(doc, map );
             saveWord(pathToSave, doc);
         } catch(FileNotFoundException e){
         log.error( "an exception has  bee thrown  "  + e.getMessage() ,e );
@@ -68,7 +73,7 @@ public class RestControllerDoc {
     }
 
 
-    private XWPFDocument replaceText(XWPFDocument doc, Map<String ,String>map) {
+    private XWPFDocument replaceText(XWPFDocument doc, Map<String ,String>map ) {
         for(Map.Entry<String,String> entry : map.entrySet()) {
             replaceTextInParagraphs( doc.getParagraphs(),entry.getKey(), entry.getValue() );
             for (XWPFTable tbl : doc.getTables()) {
@@ -79,6 +84,75 @@ public class RestControllerDoc {
                 }
             }
         }
+
+      /*  table = doc.createTable(2,3);
+        table.setWidth( 300 );
+        table.setColBandSize( 2 );
+        table.getRow( 0 ).getCell( 0 ).setText( "NAME " );
+        table.getRow( 0 ).getCell(  1).setText( "EMAIL" );
+        table.getRow( 0 ).getCell( 2 ).setText( "AGE " );
+        //FILL VALUE
+
+        table.getRow( 1 ).getCell( 0).setText( "houssem" );
+        table.getRow( 1 ).getCell( 1 ).setText( "test@gmail.com" );
+        table.getRow( 1 ).getCell( 2 ).setText( "30" );
+
+*/
+        XWPFParagraph paragraph;
+        XWPFRun run;
+        XWPFTable table;
+        XWPFTableRow row;
+
+
+        //the header
+        XWPFHeader header = doc.createHeader(HeaderFooterType.DEFAULT);
+
+        paragraph = header.createParagraph();
+
+        //the body
+        paragraph = doc.createParagraph();
+        paragraph.setAlignment( ParagraphAlignment.CENTER);
+        run = paragraph.createRun();
+        run.setText("Patient Report");
+        run.setBold(true);
+        run.setUnderline( UnderlinePatterns.SINGLE);
+        run.setFontSize(18);
+        run.setFontFamily("Times New Roman");
+
+       table = doc.createTable(4, 4);
+        table.getRows().forEach( x ->  x.getTableCells().forEach(
+                t-> t.getParagraphs().forEach( p -> {
+                        if(p.getCTP().getPPr() == null) p.getCTP().addNewPPr().addNewKeepLines();
+                        p.setKeepNext( true );} )
+       ) );
+
+        table.setWidth("100%");
+        row = table.getRow(0);
+        for(int i = 0  ; i<= 3 ; i++)
+            row.getCell( i ).setColor( "9FB4B6" );
+        row.getCell(0).setText("CUSTOMER_NAME");
+        row.getCell(1).setText("displayName");
+        row.getCell(2).setText("CUSTOMER_ID");
+        row.getCell(3).setText("displayCustomerID");
+
+        row = table.getRow(1);
+        row.getCell(0).setText("x1");
+        row.getCell(1).setText("name1");
+        row.getCell(2).setText("2022-01-01");
+        row.getCell(3).setText("mardi ");
+
+        row = table.getRow(2);
+
+        row.getCell(0).setText("x2");
+        row.getCell(1).setText("name2");
+        row.getCell(2).setText("2022-01-02");
+        row.getCell(3).setText("jeudi ");
+
+        row = table.getRow(3);
+        row.getCell(0).setText("x3");
+        row.getCell(1).setText("name2");
+        row.getCell(2).setText("2022-01-02");
+        row.getCell(3).setText("jeudi ");
         return doc;
     }
 
@@ -105,6 +179,8 @@ public class RestControllerDoc {
        }
 
     }
+
+
 
 
 }
